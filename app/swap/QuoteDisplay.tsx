@@ -8,11 +8,13 @@ interface TokenInfo {
 export default function QuoteDisplay({
   network,
   evmQuote,
+  fromAmount,
   solanaQuote,
   fromToken,
   toToken,
 }: {
   network: 'evm' | 'solana';
+  fromAmount: string;
   evmQuote: any;
   solanaQuote: any;
   fromToken: TokenInfo | null;
@@ -21,11 +23,9 @@ export default function QuoteDisplay({
   if (network === 'evm' && evmQuote && fromToken && toToken) {
     return (
       <pre className="bg-gray-100 p-2 overflow-x-auto text-xs whitespace-pre-wrap">
-        From: {ethers.formatUnits(evmQuote.fromTokenAmount, fromToken.decimals)} {fromToken.symbol}
+        From: {fromAmount} {fromToken?.symbol}
         {'\n'}
-        To: {ethers.formatUnits(evmQuote.toTokenAmount, toToken.decimals)} {toToken.symbol}
-        {'\n'}
-        Estimated Gas: {evmQuote.estimatedGas}
+        To: {ethers.formatUnits(evmQuote.toAmount, toToken?.decimals || 18)} {toToken?.symbol}
       </pre>
     );
   }

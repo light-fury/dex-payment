@@ -114,12 +114,12 @@ export default function SwapContainer() {
 
     try {
       const amountInWei = ethers.parseUnits(amount, fromToken.decimals).toString();
-      const url = `https://api.1inch.dev/v5.2/${ONEINCH_CHAIN_ID}/quote?fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&amount=${amountInWei}`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}` } });
-      console.log(res)
+      const res = await fetch(
+        `/api/quote?fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&amount=${amountInWei}&chainId=${ONEINCH_CHAIN_ID}`
+      );
       if (!res.ok) throw new Error('1inch quote fetch failed');
-
       const data = await res.json();
+      console.log(data)
       setEvmQuote(data);
     } catch (e: any) {
       setToast(`EVM quote error: ${e.message}`);
@@ -138,9 +138,9 @@ export default function SwapContainer() {
       const signer = await evmProvider.getSigner();
       const fromAddress = await signer.getAddress();
       const amountInWei = ethers.parseUnits(amount, fromToken.decimals).toString();
-
-      const swapUrl = `https://api.1inch.dev/v5.2/${ONEINCH_CHAIN_ID}/swap?fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&amount=${amountInWei}&fromAddress=${fromAddress}&slippage=${slippage}&disableEstimate=true`;
-      const res = await fetch(swapUrl, { headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}` } });
+      const res = await fetch(`/api/swap?fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&amount=${amountInWei}&fromAddress=${fromAddress}&slippage=${slippage}&chainId=${ONEINCH_CHAIN_ID}`);
+      // const swapUrl = `https://api.1inch.dev/v5.2/${ONEINCH_CHAIN_ID}/swap?fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&amount=${amountInWei}&fromAddress=${fromAddress}&slippage=${slippage}&disableEstimate=true`;
+      // const res = await fetch(swapUrl, { headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}` } });
       if (!res.ok) throw new Error('Failed to get swap transaction data');
 
       const data = await res.json();
@@ -287,7 +287,7 @@ export default function SwapContainer() {
         onSwap={network === 'evm' ? executeEvmSwap : executeSolanaSwap}
       />
 
-      <QuoteDisplay network={network} evmQuote={evmQuote} solanaQuote={solanaQuote} fromToken={fromToken} toToken={toToken} />
+      <QuoteDisplay network={network} fromAmount={amount} evmQuote={evmQuote} solanaQuote={solanaQuote} fromToken={fromToken} toToken={toToken} />
 
       {tokenModalOpen && (
         <TokenSelectorModal
