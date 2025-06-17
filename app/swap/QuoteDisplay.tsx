@@ -34,8 +34,8 @@ export default function QuoteDisplay({
     const route = solanaQuote.routePlan || [];
     return (
       <>
-        {route.map((individualRoute: any) => (
-          <pre className="bg-gray-100 p-2 text-xs whitespace-pre-wrap">
+        {route.map((individualRoute: any, index: number) => (
+          <pre key={individualRoute.swapInfo?.label || index} className="bg-gray-100 p-2 text-xs whitespace-pre-wrap">
             From: {(individualRoute.swapInfo?.inAmount / Math.pow(10, fromToken?.decimals || 0)).toFixed(6)} {fromToken?.symbol}
             {'\n'}
             To: {(individualRoute.swapInfo?.outAmount / Math.pow(10, toToken?.decimals || 0)).toFixed(6)} {toToken?.symbol}
