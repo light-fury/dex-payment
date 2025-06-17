@@ -31,15 +31,23 @@ export default function QuoteDisplay({
   }
 
   if (network === 'solana' && solanaQuote) {
-    const route = solanaQuote.routes?.[0];
+    const route = solanaQuote.routePlan || [];
     return (
-      <pre className="bg-gray-100 p-2 overflow-x-auto text-xs whitespace-pre-wrap">
-        From: {(route.inAmount / Math.pow(10, fromToken?.decimals || 0)).toFixed(6)} {fromToken?.symbol}
+      <>
+        {route.map((individualRoute: any) => (
+          <pre className="bg-gray-100 p-2 text-xs whitespace-pre-wrap">
+            From: {(individualRoute.swapInfo?.inAmount / Math.pow(10, fromToken?.decimals || 0)).toFixed(6)} {fromToken?.symbol}
+            {'\n'}
+            To: {(individualRoute.swapInfo?.outAmount / Math.pow(10, toToken?.decimals || 0)).toFixed(6)} {toToken?.symbol}
+            {'\n'}
+            Percent: {individualRoute.percent}%
+          </pre>
+        ))}
         {'\n'}
-        To: {(route.outAmount / Math.pow(10, toToken?.decimals || 0)).toFixed(6)} {toToken?.symbol}
-        {'\n'}
-        Price Impact: {(route.priceImpactPct * 100).toFixed(2)}%
-      </pre>
+        <pre className="bg-gray-100 p-2 text-xs whitespace-pre-wrap">
+          Price Impact: {(solanaQuote?.priceImpactPct * 100).toFixed(2)}%
+        </pre>
+      </>
     );
   }
 

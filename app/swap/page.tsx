@@ -114,9 +114,9 @@ export default function SwapContainer() {
 
     try {
       const amountInWei = ethers.parseUnits(amount, fromToken.decimals).toString();
-      const url = `https://api.1inch.io/v5.0/${ONEINCH_CHAIN_ID}/quote?fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&amount=${amountInWei}`;
+      const url = `https://api.1inch.dev/v5.2/${ONEINCH_CHAIN_ID}/quote?fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&amount=${amountInWei}`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}` } });
-
+      console.log(res)
       if (!res.ok) throw new Error('1inch quote fetch failed');
 
       const data = await res.json();
@@ -139,7 +139,7 @@ export default function SwapContainer() {
       const fromAddress = await signer.getAddress();
       const amountInWei = ethers.parseUnits(amount, fromToken.decimals).toString();
 
-      const swapUrl = `https://api.1inch.io/v5.0/${ONEINCH_CHAIN_ID}/swap?fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&amount=${amountInWei}&fromAddress=${fromAddress}&slippage=${slippage}&disableEstimate=true`;
+      const swapUrl = `https://api.1inch.dev/v5.2/${ONEINCH_CHAIN_ID}/swap?fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&amount=${amountInWei}&fromAddress=${fromAddress}&slippage=${slippage}&disableEstimate=true`;
       const res = await fetch(swapUrl, { headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}` } });
       if (!res.ok) throw new Error('Failed to get swap transaction data');
 
