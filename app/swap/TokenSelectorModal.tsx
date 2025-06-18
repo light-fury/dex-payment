@@ -40,9 +40,9 @@ export default function TokenSelectorModal({
           autoFocus
         />
         <ul className="space-y-2 max-h-64 overflow-auto">
-          {filteredTokens.map((token) => (
+          {filteredTokens.map((token, index) => (
             <li
-              key={token.address}
+              key={`${token.address}-${index}`}
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-200 p-2 rounded"
               onClick={() => onSelect(token)}
             >

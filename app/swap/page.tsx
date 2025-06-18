@@ -31,6 +31,9 @@ export default function SwapContainer() {
   const [fromToken, setFromToken] = useState<TokenInfo | null>(null);
   const [toToken, setToToken] = useState<TokenInfo | null>(null);
 
+  const [fromSolToken, setFromSolToken] = useState<TokenInfo | null>(null);
+  const [toSolToken, setToSolToken] = useState<TokenInfo | null>(null);
+
   const [amount, setAmount] = useState('');
   const [slippage, setSlippage] = useState(0.5);
 
@@ -102,10 +105,10 @@ export default function SwapContainer() {
       .then((data) => setEvmTokens(data.tokens))
       .catch(() => setToast('Failed to load EVM tokens'));
 
-    fetch('https://token.jup.ag/all')
+    fetch('/api/solana/tokens')
       .then((res) => res.json())
       .then((data) => {
-        setSolanaTokens((data as TokenInfo[]).slice(0, 1000));
+        setSolanaTokens((data as TokenInfo[]));
       })
       .catch(() => setToast('Failed to load Solana tokens'));
 
@@ -115,6 +118,10 @@ export default function SwapContainer() {
     const to = localStorage.getItem('toToken');
     if (from) setFromToken(JSON.parse(from));
     if (to) setToToken(JSON.parse(to));
+    const fromSol = localStorage.getItem('fromSolToken');
+    const toSol = localStorage.getItem('toSolToken');
+    if (fromSol) setFromSolToken(JSON.parse(fromSol));
+    if (toSol) setToSolToken(JSON.parse(toSol));
   }, []);
 
   // Persist settings
@@ -125,6 +132,14 @@ export default function SwapContainer() {
   useEffect(() => {
     if (toToken) localStorage.setItem('toToken', JSON.stringify(toToken));
   }, [toToken]);
+  
+  useEffect(() => {
+    if (fromSolToken) localStorage.setItem('fromSolToken', JSON.stringify(fromSolToken));
+  }, [fromSolToken]);
+
+  useEffect(() => {
+    if (toSolToken) localStorage.setItem('toSolToken', JSON.stringify(toSolToken));
+  }, [toSolToken]);
 
   useEffect(() => {
     localStorage.setItem('slippage', slippage.toString());
@@ -155,7 +170,6 @@ export default function SwapContainer() {
       );
       if (!res.ok) throw new Error('1inch quote fetch failed');
       const data = await res.json();
-      console.log(data)
       setEvmQuote(data);
     } catch (e: any) {
       setToast(`EVM quote error: ${e.message}`);
@@ -194,15 +208,15 @@ export default function SwapContainer() {
 
   // Get Solana quote from Jupiter
   const getSolanaQuote = useCallback(async () => {
-    if (!fromToken || !toToken || !amount) {
+    if (!fromSolToken || !toSolToken || !amount) {
       setToast('Select tokens and amount');
       return;
     }
 
     try {
-      const amountInBaseUnits = Math.floor(parseFloat(amount) * 10 ** fromToken.decimals);
+      const amountInBaseUnits = Math.floor(parseFloat(amount) * 10 ** fromSolToken.decimals);
 
-      const url = `https://quote-api.jup.ag/v6/quote?inputMint=${fromToken.address}&outputMint=${toToken.address}&amount=${amountInBaseUnits}&slippageBps=${Math.floor(slippage * 100)}`;
+      const url = `https://quote-api.jup.ag/v6/quote?inputMint=${fromSolToken.address}&outputMint=${toSolToken.address}&amount=${amountInBaseUnits}&slippageBps=${Math.floor(slippage * 100)}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Jupiter quote fetch failed');
 
@@ -211,11 +225,11 @@ export default function SwapContainer() {
     } catch (e: any) {
       setToast(`Solana quote error: ${e.message}`);
     }
-  }, [fromToken, toToken, amount, slippage]);
+  }, [fromSolToken, toSolToken, amount, slippage]);
 
   // Execute Solana swap using Jupiter + Phantom
   const executeSolanaSwap = useCallback(async () => {
-    if (!phantom || !fromToken || !toToken || !amount) {
+    if (!phantom || !fromSolToken || !toSolToken || !amount) {
       setToast('Select tokens and connect Phantom wallet');
       return;
     }
@@ -225,9 +239,9 @@ export default function SwapContainer() {
       const userPubkey = phantom.publicKey;
       if (!userPubkey) throw new Error('Phantom wallet not connected');
 
-      const amountInBaseUnits = Math.floor(parseFloat(amount) * 10 ** fromToken.decimals);
+      const amountInBaseUnits = Math.floor(parseFloat(amount) * 10 ** fromSolToken.decimals);
 
-      const quoteRes = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${fromToken.address}&outputMint=${toToken.address}&amount=${amountInBaseUnits}&slippageBps=${Math.floor(slippage * 100)}`);
+      const quoteRes = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${fromSolToken.address}&outputMint=${toSolToken.address}&amount=${amountInBaseUnits}&slippageBps=${Math.floor(slippage * 100)}`);
       if (!quoteRes.ok) throw new Error('Failed to fetch Jupiter quote');
 
       const quoteData = await quoteRes.json();
@@ -258,7 +272,7 @@ export default function SwapContainer() {
     } catch (e: any) {
       setToast(`Solana swap error: ${e.message}`);
     }
-  }, [phantom, fromToken, toToken, amount, slippage]);
+  }, [phantom, fromSolToken, toSolToken, amount, slippage]);
 
   // Tokens for modal
   const tokensForModal = network === 'evm' ? evmTokens : solanaTokens;
@@ -289,10 +303,10 @@ export default function SwapContainer() {
           className="flex-1 border p-2 rounded flex items-center gap-2"
           onClick={() => setTokenModalOpen('from')}
         >
-          {fromToken ? (
+          {(network === 'evm' ? fromToken : fromSolToken) ? (
             <>
-              <img src={fromToken.logoURI} alt={fromToken.symbol} width={24} height={24} className="rounded-full" />
-              <span>{fromToken.symbol}</span>
+              <img src={(network === 'evm' ? fromToken : fromSolToken)!.logoURI} alt={(network === 'evm' ? fromToken : fromSolToken)!.symbol} width={24} height={24} className="rounded-full" />
+              <span>{(network === 'evm' ? fromToken : fromSolToken)!.symbol}</span>
             </>
           ) : (
             <span>Select From Token</span>
@@ -303,10 +317,10 @@ export default function SwapContainer() {
           className="flex-1 border p-2 rounded flex items-center gap-2"
           onClick={() => setTokenModalOpen('to')}
         >
-          {toToken ? (
+          {(network === 'evm' ? toToken : toSolToken) ? (
             <>
-              <img src={toToken.logoURI} alt={toToken.symbol} width={24} height={24} className="rounded-full" />
-              <span>{toToken.symbol}</span>
+              <img src={(network === 'evm' ? toToken : toSolToken)!.logoURI} alt={(network === 'evm' ? toToken : toSolToken)!.symbol} width={24} height={24} className="rounded-full" />
+              <span>{(network === 'evm' ? toToken : toSolToken)!.symbol}</span>
             </>
           ) : (
             <span>Select To Token</span>
@@ -323,7 +337,14 @@ export default function SwapContainer() {
         onSwap={network === 'evm' ? executeEvmSwap : executeSolanaSwap}
       />
 
-      <QuoteDisplay network={network} fromAmount={amount} evmQuote={evmQuote} solanaQuote={solanaQuote} fromToken={fromToken} toToken={toToken} />
+      <QuoteDisplay
+        network={network}
+        fromAmount={amount}
+        evmQuote={evmQuote}
+        solanaQuote={solanaQuote}
+        fromToken={network === 'evm' ? fromToken : fromSolToken}
+        toToken={network === 'evm' ? toToken : toSolToken}
+      />
 
       <div className="flex gap-2">
         <Button onClick={connectEvmWallet}>Connect EVM Wallet</Button>
@@ -340,8 +361,20 @@ export default function SwapContainer() {
         <TokenSelectorModal
           tokens={tokensForModal}
           onSelect={(token: TokenInfo) => {
-            if (tokenModalOpen === 'from') setFromToken(token);
-            else if (tokenModalOpen === 'to') setToToken(token);
+            if (tokenModalOpen === 'from') {
+              if (network === 'evm') {
+                setFromToken(token);
+              } else {
+                setFromSolToken(token);
+              }
+            }
+            else if (tokenModalOpen === 'to') {
+              if (network === 'evm') {
+                setToToken(token);
+              } else {
+                setToSolToken(token);
+              }
+            }
             setTokenModalOpen(null);
           }}
           onClose={() => setTokenModalOpen(null)}
