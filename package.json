@@ -12,6 +12,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@shadcn/ui": "^0.0.4",
     "@solana/web3.js": "^1.98.2",
+    "@walletconnect/web3-provider": "^1.8.0",
     "autoprefixer": "^10.4.21",
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.1",
