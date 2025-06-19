@@ -13,7 +13,7 @@ import { TokenInfo } from '../lib/utils';
 type Network = 'evm' | 'solana';
 
 const ONEINCH_CHAIN_ID = 1;
-const SOLANA_RPC = 'https://api.mainnet-beta.solana.com';
+const SOLANA_RPC = `https://mainnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY}`;
 
 export default function SwapContainer() {
   const [network, setNetwork] = useState<Network>('evm');
@@ -51,7 +51,7 @@ export default function SwapContainer() {
   const [toast, setToast] = useState<string | null>(null);
 
   const getSolBalance = async (pubKeyStr: string) => {
-    const connection = new Connection(clusterApiUrl("mainnet-beta")); // or "devnet"
+    const connection = new Connection(SOLANA_RPC);
     const publicKey = new PublicKey(pubKeyStr);
     const balanceLamports = await connection.getBalance(publicKey);
     const balanceSol = balanceLamports / 1e9; // Convert from lamports to SOL
@@ -63,9 +63,8 @@ export default function SwapContainer() {
     if (phantom) {
       try {
         const resp = await phantom.connect();
-        console.log('Phantom connected:', resp.publicKey.toString());
-        setSolAccount(resp.publicKey.toString());
         const newBalance = await getSolBalance(resp.publicKey.toString());
+        setSolAccount(resp.publicKey.toString());
         setSolBalance(newBalance.toString());
       } catch (err) {
         console.error('Phantom connect error:', err);
@@ -78,11 +77,11 @@ export default function SwapContainer() {
   const connectEvmWallet = async () => {
     if ((window as any).ethereum) {
       const provider = new ethers.BrowserProvider((window as any).ethereum);
-      setEvmProvider(provider);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
-      setAccount(address);
       const bal = await provider.getBalance(address);
+      setEvmProvider(provider);
+      setAccount(address);
       setBalance(ethers.formatEther(bal));
     } else {
       setToast('Web3 Wallet not found');
@@ -233,7 +232,6 @@ export default function SwapContainer() {
 
       const data = await res.json();
       setSolanaQuote(data);
-      console.log(data);
     } catch (e: any) {
       setToast(`Solana quote error: ${e.message}`);
     }
