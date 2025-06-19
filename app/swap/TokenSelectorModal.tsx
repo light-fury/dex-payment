@@ -15,7 +15,7 @@ export default function TokenSelectorModal({
 
   useEffect(() => {
     const q = search.toLowerCase();
-    setFilteredTokens(tokens.filter((t) => t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
+    setFilteredTokens(tokens.filter((t) => t.address.toLowerCase().includes(q) || t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
   }, [search, tokens]);
 
   return (

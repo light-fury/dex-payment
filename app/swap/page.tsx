@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import WalletConnectProvider from '@walletconnect/web3-provider';
-import { Connection, PublicKey, Transaction, clusterApiUrl } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, VersionedTransaction, clusterApiUrl } from '@solana/web3.js';
 import TokenSelectorModal from './TokenSelectorModal';
 import SwapControls from './SwapControls';
 import QuoteDisplay from './QuoteDisplay';
@@ -255,15 +255,13 @@ export default function SwapContainer() {
       if (!quoteRes.ok) throw new Error('Failed to fetch Jupiter quote');
 
       const quoteData = await quoteRes.json();
-      if (!quoteData.data?.length) throw new Error('No swap routes found');
-
-      const route = quoteData.data[0];
+      if (!quoteData.routePlan?.length) throw new Error('No swap routes found');
 
       const swapRes = await fetch('https://quote-api.jup.ag/v6/swap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          route,
+          quoteResponse: quoteData,
           userPublicKey: userPubkey.toString(),
           wrapUnwrapSOL: true,
           computeUnitPriceMicroLamports: 0,
@@ -274,11 +272,24 @@ export default function SwapContainer() {
       const swapData = await swapRes.json();
       if (!swapData.swapTransaction) throw new Error('Swap transaction missing');
 
-      const tx = Transaction.from(Buffer.from(swapData.swapTransaction, 'base64'));
-      const signedTx = await phantom.signTransaction(tx);
+      const transaction = VersionedTransaction.deserialize(Buffer.from(swapData.swapTransaction, 'base64'));
+      console.log(transaction);
+      
+      transaction.sign([phantom]);
+      
+      const transactionBinary = transaction.serialize();
+      console.log(transactionBinary);
+      const signature = await connection.sendRawTransaction(transactionBinary, {
+        maxRetries: 2,
+        skipPreflight: true
+      });
+      setToast(`Swap sent, Txid: ${signature}`);
+  
+      // const tx = Transaction.from(Buffer.from(swapData.swapTransaction, 'base64'));
+      // const signedTx = await phantom.signTransaction(tx);
 
-      const txid = await connection.sendRawTransaction(signedTx.serialize());
-      setToast(`Swap sent, Txid: ${txid}`);
+      // const txid = await connection.sendRawTransaction(signedTx.serialize());
+      // setToast(`Swap sent, Txid: ${txid}`);
     } catch (e: any) {
       setToast(`Solana swap error: ${e.message}`);
     }
