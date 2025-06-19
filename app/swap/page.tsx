@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import WalletConnectProvider from '@walletconnect/web3-provider';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, clusterApiUrl } from '@solana/web3.js';
 import TokenSelectorModal from './TokenSelectorModal';
 import SwapControls from './SwapControls';
 import QuoteDisplay from './QuoteDisplay';
@@ -37,6 +37,9 @@ export default function SwapContainer() {
   const [account, setAccount] = useState<string>('');
   const [balance, setBalance] = useState<string>('');
 
+  const [solAccount, setSolAccount] = useState<string>('');
+  const [solBalance, setSolBalance] = useState<string>('');
+
   // Quotes
   const [evmQuote, setEvmQuote] = useState<any>(null);
   const [solanaQuote, setSolanaQuote] = useState<any>(null);
@@ -47,17 +50,28 @@ export default function SwapContainer() {
   // Toast for user feedback
   const [toast, setToast] = useState<string | null>(null);
 
+  const getSolBalance = async (pubKeyStr: string) => {
+    const connection = new Connection(clusterApiUrl("mainnet-beta")); // or "devnet"
+    const publicKey = new PublicKey(pubKeyStr);
+    const balanceLamports = await connection.getBalance(publicKey);
+    const balanceSol = balanceLamports / 1e9; // Convert from lamports to SOL
+    return balanceSol;
+  };
+
   // Wallet Functions
   const connectPhantomWallet = async () => {
     if (phantom) {
       try {
         const resp = await phantom.connect();
         console.log('Phantom connected:', resp.publicKey.toString());
-        setAccount(resp.publicKey.toString());
-        // setBalance(resp.);
+        setSolAccount(resp.publicKey.toString());
+        const newBalance = await getSolBalance(resp.publicKey.toString());
+        setSolBalance(newBalance.toString());
       } catch (err) {
         console.error('Phantom connect error:', err);
       }
+    } else {
+      setToast('Solana Wallet not found');
     }
   };
 
@@ -70,6 +84,8 @@ export default function SwapContainer() {
       setAccount(address);
       const bal = await provider.getBalance(address);
       setBalance(ethers.formatEther(bal));
+    } else {
+      setToast('Web3 Wallet not found');
     }
   };
 
@@ -350,6 +366,12 @@ export default function SwapContainer() {
       {evmProvider && account && (
         <div className="text-xs text-gray-500">
           Connected: {account} <br /> Balance: {parseFloat(balance).toFixed(4)} ETH
+        </div>
+      )}
+
+      {phantom && solAccount && (
+        <div className="text-xs text-gray-500">
+          Connected: {solAccount} <br /> Balance: {parseFloat(solBalance).toFixed(4)} SOL
         </div>
       )}
 
