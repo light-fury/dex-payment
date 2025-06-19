@@ -53,6 +53,8 @@ export default function SwapContainer() {
       try {
         const resp = await phantom.connect();
         console.log('Phantom connected:', resp.publicKey.toString());
+        setAccount(resp.publicKey.toString());
+        // setBalance(resp.);
       } catch (err) {
         console.error('Phantom connect error:', err);
       }
