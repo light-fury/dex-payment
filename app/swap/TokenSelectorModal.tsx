@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TokenInfo } from '../lib/utils';
+import { useDebounce } from '../lib/hooks/useDebounce';
 
 export default function TokenSelectorModal({
   tokens,
@@ -11,12 +12,16 @@ export default function TokenSelectorModal({
   onClose: () => void;
 }) {
   const [search, setSearch] = useState('');
+  const debouncedKeyword = useDebounce(search, 1000); // Wait 300ms
   const [filteredTokens, setFilteredTokens] = useState<TokenInfo[]>(tokens);
 
   useEffect(() => {
-    const q = search.toLowerCase();
-    setFilteredTokens(tokens.filter((t) => t.address.toLowerCase().includes(q) || t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
-  }, [search, tokens]);
+    if (debouncedKeyword) {
+      // Make your API call or filter logic here
+      const q = debouncedKeyword.toLowerCase();
+      setFilteredTokens(tokens.filter((t) => t.address.toLowerCase().includes(q) || t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
+    }
+  }, [debouncedKeyword, tokens]);
 
   return (
     <div
