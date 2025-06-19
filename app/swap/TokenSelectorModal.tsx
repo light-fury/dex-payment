@@ -1,12 +1,5 @@
 import { useState, useEffect } from 'react';
-
-interface TokenInfo {
-  address: string;
-  symbol: string;
-  name: string;
-  decimals: number;
-  logoURI: string;
-}
+import { TokenInfo } from '../lib/utils';
 
 export default function TokenSelectorModal({
   tokens,

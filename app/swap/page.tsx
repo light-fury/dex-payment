@@ -8,14 +8,7 @@ import TokenSelectorModal from './TokenSelectorModal';
 import SwapControls from './SwapControls';
 import QuoteDisplay from './QuoteDisplay';
 import { Button } from '../../components/ui/button';
-
-interface TokenInfo {
-  address: string;
-  symbol: string;
-  name: string;
-  decimals: number;
-  logoURI: string;
-}
+import { TokenInfo } from '../lib/utils';
 
 type Network = 'evm' | 'solana';
 
@@ -222,6 +215,7 @@ export default function SwapContainer() {
 
       const data = await res.json();
       setSolanaQuote(data);
+      console.log(data);
     } catch (e: any) {
       setToast(`Solana quote error: ${e.message}`);
     }
