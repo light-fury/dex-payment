@@ -212,7 +212,7 @@ export default function SwapContainer() {
       await txResponse.wait();
       setToast('Swap confirmed!');
     } catch (e: any) {
-      setToast(`Swap failed: ${e.message}`);
+      setToast(`Swap failed: ${e.message.slice(0, 100)}`);
     }
   }, [fromToken, toToken, amount, evmProvider, slippage]);
 
@@ -253,7 +253,6 @@ export default function SwapContainer() {
 
       const quoteRes = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${fromSolToken.address}&outputMint=${toSolToken.address}&amount=${amountInBaseUnits}&slippageBps=${Math.floor(slippage * 100)}`);
       if (!quoteRes.ok) throw new Error('Failed to fetch Jupiter quote');
-
       const quoteData = await quoteRes.json();
       if (!quoteData.routePlan?.length) throw new Error('No swap routes found');
 
@@ -267,29 +266,27 @@ export default function SwapContainer() {
           computeUnitPriceMicroLamports: 0,
         }),
       });
+      
       if (!swapRes.ok) throw new Error('Failed to fetch swap transaction');
 
       const swapData = await swapRes.json();
       if (!swapData.swapTransaction) throw new Error('Swap transaction missing');
 
       const transaction = VersionedTransaction.deserialize(Buffer.from(swapData.swapTransaction, 'base64'));
-      console.log(transaction);
       
-      transaction.sign([phantom]);
+      const signedTx = await phantom.signTransaction(transaction);
       
-      const transactionBinary = transaction.serialize();
-      console.log(transactionBinary);
+      const transactionBinary = signedTx.serialize();
       const signature = await connection.sendRawTransaction(transactionBinary, {
         maxRetries: 2,
         skipPreflight: true
       });
       setToast(`Swap sent, Txid: ${signature}`);
-  
-      // const tx = Transaction.from(Buffer.from(swapData.swapTransaction, 'base64'));
-      // const signedTx = await phantom.signTransaction(tx);
+      const confirmation = await connection.confirmTransaction(signature, "finalized");
 
-      // const txid = await connection.sendRawTransaction(signedTx.serialize());
-      // setToast(`Swap sent, Txid: ${txid}`);
+      if (confirmation.value.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}\nhttps://solscan.io/tx/${signature}/`);
+      } else setToast(`Transaction successful: https://solscan.io/tx/${signature}/`);
     } catch (e: any) {
       setToast(`Solana swap error: ${e.message}`);
     }
