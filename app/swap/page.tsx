@@ -264,6 +264,12 @@ export default function SwapContainer() {
           userPublicKey: userPubkey.toString(),
           wrapUnwrapSOL: true,
           computeUnitPriceMicroLamports: 0,
+          prioritizationFeeLamports: {
+            priorityLevelWithMaxLamports: {
+              maxLamports: 1000000,
+              priorityLevel: "medium"
+            }
+          }
         }),
       });
       
