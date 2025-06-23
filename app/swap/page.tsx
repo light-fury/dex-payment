@@ -226,11 +226,12 @@ export default function SwapContainer() {
     try {
       const amountInBaseUnits = Math.floor(parseFloat(amount) * 10 ** fromSolToken.decimals);
 
-      const url = `https://quote-api.jup.ag/v6/quote?inputMint=${fromSolToken.address}&outputMint=${toSolToken.address}&amount=${amountInBaseUnits}&slippageBps=${Math.floor(slippage * 100)}`;
+      const url = `https://lite-api.jup.ag/swap/v1/quote?inputMint=${fromSolToken.address}&outputMint=${toSolToken.address}&amount=${amountInBaseUnits}&slippageBps=${Math.floor(slippage * 100)}&onlyDirectRoutes=false&asLegacyTransaction=false`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Jupiter quote fetch failed');
 
       const data = await res.json();
+      console.log(data);
       setSolanaQuote(data);
     } catch (e: any) {
       setToast(`Solana quote error: ${e.message}`);
@@ -243,7 +244,6 @@ export default function SwapContainer() {
       setToast('Select tokens and connect Phantom wallet');
       return;
     }
-
     try {
       const connection = new Connection(SOLANA_RPC);
       const userPubkey = phantom.publicKey;
@@ -251,12 +251,12 @@ export default function SwapContainer() {
 
       const amountInBaseUnits = Math.floor(parseFloat(amount) * 10 ** fromSolToken.decimals);
 
-      const quoteRes = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${fromSolToken.address}&outputMint=${toSolToken.address}&amount=${amountInBaseUnits}&slippageBps=${Math.floor(slippage * 100)}`);
+      const quoteRes = await fetch(`https://lite-api.jup.ag/swap/v1/quote?inputMint=${fromSolToken.address}&outputMint=${toSolToken.address}&amount=${amountInBaseUnits}&slippageBps=${Math.floor(slippage * 100)}&onlyDirectRoutes=false&asLegacyTransaction=false`);
       if (!quoteRes.ok) throw new Error('Failed to fetch Jupiter quote');
       const quoteData = await quoteRes.json();
       if (!quoteData.routePlan?.length) throw new Error('No swap routes found');
 
-      const swapRes = await fetch('https://quote-api.jup.ag/v6/swap', {
+      const swapRes = await fetch('https://lite-api.jup.ag/swap/v1/swap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
